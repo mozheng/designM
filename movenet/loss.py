@@ -31,16 +31,16 @@ class I2CNLoss(nn.Module):
     """
     Image to Chinese Loss
     """
-    def __init__(self, prompts:list, version="ViT-B-16"):
+    def __init__(self, prompts:list, device, version="ViT-B-16"):
 
         super(I2CNLoss, self).__init__()
-        
-        self.model, self.preprocess = load_from_name(version, device=self.device, download_root='./')
+        self.device = device
+        self.model, self.preprocess = load_from_name(version, device=self.device)
         self.model.eval()
         
         text = clip.tokenize(prompts).to(self.device)
-        text_features = self.model.encode_text(text)
-        self.text_features /= text_features.norm(dim=-1, keepdim=True)  
+        self.text_features = self.model.encode_text(text)
+        self.text_features /= self.text_features.norm(dim=-1, keepdim=True)  
         
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
