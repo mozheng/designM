@@ -10,7 +10,7 @@ class Trainer:
                  background,
                  layers_images, 
                  layers_mask_images,
-                 prompts: str,
+                 prompts: list,
                  device: str,
                  ) -> None:
         n, c, h, w = layers_images.shape
