@@ -45,6 +45,7 @@ class I2CNLoss(nn.Module):
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
     def forward(self, image):
+        image = image.permute(0, 2, 3, 1)
         image = self.preprocess(image).to(self.device)
         
         image_features = self.model.encode_image(image)

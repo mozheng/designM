@@ -10,6 +10,7 @@ class Trainer:
                  background,
                  layers_images, 
                  layers_mask_images,
+                 prompts: str,
                  device: str,
                  ) -> None:
         n, c, h, w = layers_images.shape
@@ -17,8 +18,9 @@ class Trainer:
         self.layers_images = layers_images
         self.layers_mask_images = layers_mask_images
         self.device = device
-        self.model = MoveNet(n, h, w)
-        self.loss = I2CNLoss(["", ""], self.device)
+        self.prompts = prompts
+        self.model = MoveNet(n+1, h, w)
+        self.loss = I2CNLoss(self.prompts, self.device)
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3).to(self.device)
         self.model.to(self.device)
         self.loss.to(self.device)
@@ -67,7 +69,7 @@ def main(layers_files:list, masks_files:list):
     background = torch.Tensor(layers_images[0]).permute(2,0,1)
     layers_images = torch.Tensor(layers_images[1:]).permute(0,3,1,2)
     layers_mask_images = torch.Tensor(layers_mask_images).permute(0,3,1,2)
-    trainer = Trainer(background, layers_images, layers_mask_images, device)
+    trainer = Trainer(background, layers_images, layers_mask_images,["狗靠在人的腿上",""], device)
     trainer.train(1, 50)
 
 
