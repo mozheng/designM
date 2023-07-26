@@ -1,7 +1,7 @@
 import torch
 import os
 import cv2
-
+import tqdm
 from movenet.movenet import MoveNet
 from movenet.loss import I2CNLoss
 
@@ -21,15 +21,16 @@ class Trainer:
         self.prompts = prompts
         self.model = MoveNet(n+1, h, w)
         self.loss = I2CNLoss(self.prompts, self.device)
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3).to(self.device)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=1e-3)
         self.model.to(self.device)
         self.loss.to(self.device)
 
     def _run_batch(self):
         self.optimizer.zero_grad()
-        image= self.model(self.background, self.layers_images, self.layers_mask_images)
-        loss = self.loss(image.unsqueeze(0))
-        loss.backward()
+        affine, output = self.model()
+        image = self.model.create_image(self.background, self.layers_images, self.layers_mask_images, affine)
+        loss = self.loss(image)
+        output.backward(loss)
         self.optimizer.step()
         return image
 
@@ -46,7 +47,7 @@ class Trainer:
         
 
     def train(self, max_epochs: int, max_iter):
-        for epoch in range(max_epochs):
+        for epoch in tqdm.tqdm(range(max_epochs)):
             image = self._run_epoch(max_iter)
             self._save_picture(image, "image_{}.jpg".format(epoch))
 
@@ -69,7 +70,7 @@ def main(layers_files:list, masks_files:list):
     background = torch.Tensor(layers_images[0]).permute(2,0,1)
     layers_images = torch.Tensor(layers_images[1:]).permute(0,3,1,2)
     layers_mask_images = torch.Tensor(layers_mask_images).permute(0,3,1,2)
-    trainer = Trainer(background, layers_images, layers_mask_images,["狗靠在人的腿上",""], device)
+    trainer = Trainer(background, layers_images, layers_mask_images,["狗靠在人的腿上"], device)
     trainer.train(1, 50)
 
 

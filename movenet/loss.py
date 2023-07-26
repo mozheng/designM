@@ -1,7 +1,7 @@
  
 import torch.nn as nn
 import torch
-import torch 
+from torchvision import transforms
 from PIL import Image
 import numpy as np
 import cn_clip.clip as clip
@@ -45,8 +45,8 @@ class I2CNLoss(nn.Module):
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
     def forward(self, image):
-        image = image.permute(0, 2, 3, 1)
-        image = self.preprocess(image).to(self.device)
+        image = transforms.ToPILImage()(image)
+        image = self.preprocess(image).unsqueeze(0).to(self.device)
         
         image_features = self.model.encode_image(image)
         # 对特征进行归一化，请使用归一化后的图文特征用于下游任务

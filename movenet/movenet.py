@@ -13,8 +13,7 @@ class MoveNet(nn.Module):
         
         self.affines_param = nn.Parameter(torch.ones(self.layers_num-1 , 4))
             
-        self.affine = torch.tanh(self.affines_param)
-        self.affine = self.gen_affine_matrix(self.affine)
+        self.loss_linear_layer = nn.Linear(6, 1)
         nn.init.xavier_uniform_(self.affines_param)
 
     def image_add(self, back, front, mask):
@@ -34,8 +33,8 @@ class MoveNet(nn.Module):
         ty = ty * self.H
         return torch.cat([a,-b,tx, b,a,ty],dim=0).resize(2,3, self.layers_num-1).permute(2,0,1)
 
-    def forward(self, background, layers_images, layers_mask_images):
-        grid = F.affine_grid(self.affine, layers_mask_images.size())
+    def create_image(self, background, layers_images, layers_mask_images, affine):
+        grid = F.affine_grid(affine, layers_mask_images.size())
         
         background = background.to(torch.uint8)
         layers_mask_images = F.grid_sample(layers_mask_images, grid).to(torch.uint8)
@@ -44,6 +43,13 @@ class MoveNet(nn.Module):
         for mask_image, mask in zip(layers_images, layers_mask_images):
             background = self.image_add(background, mask_image, mask)
         return background
+    
+    def forward(self):
+        affine = torch.tanh(self.affines_param)
+        affine = self.gen_affine_matrix(affine)
+        output = affine.reshape(self.layers_num-1, -1)
+        output = self.loss_linear_layer(output)
+        return affine, output
     
 
 if __name__ == '__main__':
@@ -56,6 +62,6 @@ if __name__ == '__main__':
     background= torch.zeros(1,3,480,640)
     layers_images=torch.zeros(2,3,480,640)
     layers_mask_images=torch.zeros(2,3,480,640)
-    res = net(background, layers_images, layers_mask_images)
+    res,output = net()
     print(res.shape)
     
