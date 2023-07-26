@@ -49,7 +49,8 @@ class Trainer:
     def train(self, max_epochs: int, max_iter):
         for epoch in tqdm.tqdm(range(max_epochs)):
             image = self._run_epoch(max_iter)
-            self._save_picture(image, "image_{}.jpg".format(epoch))
+            if epoch % 20 == 0 :
+                self._save_picture(image, "image_{}.jpg".format(epoch))
 
 
 
@@ -71,7 +72,7 @@ def main(layers_files:list, masks_files:list):
     layers_images = torch.Tensor(layers_images[1:]).permute(0,3,1,2)
     layers_mask_images = torch.Tensor(layers_mask_images).permute(0,3,1,2)
     trainer = Trainer(background, layers_images, layers_mask_images,["狗靠在人的腿上"], device)
-    trainer.train(1, 50)
+    trainer.train(1, 61)
 
 
 if __name__ == "__main__":

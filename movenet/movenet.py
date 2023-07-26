@@ -37,8 +37,8 @@ class MoveNet(nn.Module):
         grid = F.affine_grid(affine, layers_mask_images.size())
         
         background = background.to(torch.uint8)
-        layers_mask_images = F.grid_sample(layers_mask_images, grid).to(torch.uint8)
-        layers_images = F.grid_sample(layers_images, grid).to(torch.uint8)
+        layers_mask_images = F.grid_sample(layers_mask_images, grid, align_corners=True).to(torch.uint8)
+        layers_images = F.grid_sample(layers_images, grid, align_corners=True).to(torch.uint8)
         
         for mask_image, mask in zip(layers_images, layers_mask_images):
             background = self.image_add(background, mask_image, mask)
