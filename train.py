@@ -14,10 +14,11 @@ class Trainer:
                  device: str,
                  ) -> None:
         n, c, h, w = layers_images.shape
-        self.background = background
-        self.layers_images = layers_images
-        self.layers_mask_images = layers_mask_images
         self.device = device
+        self.background = background.to(self.device)
+        self.layers_images = layers_images.to(self.device)
+        self.layers_mask_images = layers_mask_images.to(self.device)
+        
         self.prompts = prompts
         self.model = MoveNet(n+1, h, w)
         self.loss = I2CNLoss(self.prompts, self.device)
@@ -27,11 +28,12 @@ class Trainer:
 
     def _run_batch(self):
         self.optimizer.zero_grad()
-        affine, output = self.model()
-        image = self.model.create_image(self.background, self.layers_images, self.layers_mask_images, affine)
+        image, output = self.model(self.background, self.layers_images, self.layers_mask_images)
         loss = self.loss(image)
         output.backward(loss)
         self.optimizer.step()
+        if torch.equal(self.background, image):
+            self.model.fine_tune(0)
         return image
 
     def _run_epoch(self, max_iter):
@@ -41,8 +43,9 @@ class Trainer:
         return image
         
     def _save_picture(self, image, imagename):
+        image = image.permute(1,2,0)
         image = cv2.cvtColor(image.cpu().numpy(),cv2.COLOR_RGB2BGR)
-        cv2.imshow(imagename, image)
+        cv2.imwrite(imagename, image)
         cv2.waitKey()
         
 

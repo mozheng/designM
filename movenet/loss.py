@@ -53,7 +53,5 @@ class I2CNLoss(nn.Module):
         image_features /= image_features.norm(dim=-1, keepdim=True) 
         
         # cosine similarity as logits
-        logit_scale = self.logit_scale.exp()
-        logits_per_image = logit_scale * image_features @ self.text_features.t()
-        loss = 1 - logits_per_image.softmax(dim=-1)
+        loss = 1 - image_features @ self.text_features.t()
         return loss
